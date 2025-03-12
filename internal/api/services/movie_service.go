@@ -30,12 +30,17 @@ func NewMovieService(
 	}
 }
 
-func (s *MovieService) GetMovieByID(ctx context.Context, id uuid.UUID) (*models.Movie, error) {
+func (s *MovieService) CreateMovie(ctx context.Context, movie *models.Movie) (*models.Movie, error) {
 	//TODO actual implementation
 	return nil, nil
 }
 
-func (s *MovieService) CreateMovie(ctx context.Context, movie *models.Movie) (*models.Movie, error) {
+func (s *MovieService) GetAllMovies(ctx context.Context, page, limit int) ([]*models.Movie, error) {
+	//TODO actual implementation
+	return nil, nil
+}
+
+func (s *MovieService) GetMovie(ctx context.Context, id uuid.UUID) (*models.Movie, error) {
 	//TODO actual implementation
 	return nil, nil
 }

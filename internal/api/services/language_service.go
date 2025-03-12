@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"github.com/google/uuid"
 	"itv-movie/internal/models"
 	"itv-movie/internal/storage/database"
 )
@@ -26,6 +27,11 @@ func (s *LanguageService) CreateLanguage(ctx context.Context, newLang *models.La
 }
 
 func (s *LanguageService) GetAllLanguages(ctx context.Context, page, limit int) ([]*models.Language, error) {
+	//TODO actual implementation
+	return nil, nil
+}
+
+func (s *LanguageService) GetLanguage(ctx context.Context, id uuid.UUID) (*models.Language, error) {
 	//TODO actual implementation
 	return nil, nil
 }

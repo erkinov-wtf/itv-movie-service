@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"github.com/google/uuid"
 	"itv-movie/internal/models"
 	"itv-movie/internal/storage/database"
 )
@@ -26,6 +27,11 @@ func (s *CountryService) CreateCountry(ctx context.Context, newLang *models.Coun
 }
 
 func (s *CountryService) GetAllCountries(ctx context.Context, page, limit int) ([]*models.Country, error) {
+	//TODO actual implementation
+	return nil, nil
+}
+
+func (s *CountryService) GetCountry(ctx context.Context, id uuid.UUID) (*models.Country, error) {
 	//TODO actual implementation
 	return nil, nil
 }
