@@ -36,17 +36,16 @@ func main() {
 			database.MustLoadDB,
 
 			// Repositories
-			database.NewMovieRepository,
-			database.NewGenreRepository,
-			database.NewCountryRepository,
 			repositories.NewLanguageRepository,
-			database.NewUserRepository,
+			repositories.NewGenreRepository,
 
 			// Services
 			services.NewLanguageService,
+			services.NewGenreService,
 
 			// Handlers setup
 			handlers.NewLanguageHandler,
+			handlers.NewGenreHandler,
 			//TODO add others
 
 			// Router
