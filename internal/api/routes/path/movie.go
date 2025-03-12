@@ -5,7 +5,7 @@ import (
 	"itv-movie/internal/api/handlers"
 )
 
-func RegisterMoviesRoutes(r *gin.RouterGroup, handler *handlers.MovieHandler) {
+func RegisterMovieRoutes(r *gin.RouterGroup, handler *handlers.MovieHandler) {
 	movies := r.Group("/movies")
 	{
 		movies.POST("", handler.CreateMovie)
