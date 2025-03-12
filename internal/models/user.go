@@ -51,12 +51,15 @@ func (s *Session) IsSessionValid() bool {
 }
 
 func (u *User) GenerateTokens(jwtConf *config.Jwt, userAgent, ipAddress string) (*Session, error) {
-	accessToken, accessTokenExpiry, err := jwt.GenerateToken(u.ID.String(), u.Username, u.Email, u.Role, jwtConf, jwt.AccessToken, time.Duration(jwtConf.AccessTokenTTL))
+	accessTokenDuration := time.Duration(jwtConf.AccessTokenTTL) * time.Second
+	refreshTokenDuration := time.Duration(jwtConf.RefreshTokenTTL) * time.Second
+
+	accessToken, accessTokenExpiry, err := jwt.GenerateToken(u.ID.String(), u.Username, u.Email, u.Role, jwtConf, jwt.AccessToken, accessTokenDuration)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate access token: %w", err)
 	}
 
-	refreshToken, refreshTokenExpiry, err := jwt.GenerateToken(u.ID.String(), u.Username, u.Email, u.Role, jwtConf, jwt.RefreshToken, time.Duration(jwtConf.RefreshTokenTTL))
+	refreshToken, refreshTokenExpiry, err := jwt.GenerateToken(u.ID.String(), u.Username, u.Email, u.Role, jwtConf, jwt.RefreshToken, refreshTokenDuration)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate refresh token: %w", err)
 	}

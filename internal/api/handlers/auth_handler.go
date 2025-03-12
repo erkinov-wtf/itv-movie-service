@@ -7,6 +7,7 @@ import (
 	"itv-movie/internal/api/services"
 	"itv-movie/internal/models"
 	"itv-movie/internal/pkg/jwt"
+	"itv-movie/internal/pkg/utils/constants"
 	"net/http"
 )
 
@@ -27,7 +28,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		LastName  string `json:"lastName" binding:"required"`
 		Username  string `json:"username" binding:"required"`
 		Email     string `json:"email" binding:"required,email"`
-		Password  string `json:"password" binding:"required,min=8"`
+		Password  string `json:"password" binding:"required,min=4"`
 	}
 
 	if err := c.BindJSON(&registerRequest); err != nil {
@@ -40,8 +41,8 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		LastName:  registerRequest.LastName,
 		Username:  registerRequest.Username,
 		Email:     registerRequest.Email,
-		Password:  registerRequest.Password, // Will be hashed in BeforeCreate hook
-		Role:      "user",                   // Default role
+		Password:  registerRequest.Password,
+		Role:      constants.UserRole,
 		Active:    true,
 	}
 
@@ -55,7 +56,6 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	// Don't return the password hash
 	createdUser.Password = ""
 
 	c.JSON(http.StatusCreated, createdUser)
@@ -138,12 +138,12 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 
 	newSession, err := h.authService.RefreshTokens(c, refreshRequest.RefreshToken, userAgent, ipAddress)
 	if err != nil {
-		switch err {
-		case services.ErrSessionInvalid:
+		switch {
+		case errors.Is(err, services.ErrSessionInvalid):
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid session"})
-		case services.ErrRefreshTokenExpired:
+		case errors.Is(err, services.ErrRefreshTokenExpired):
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Refresh token has expired, please login again"})
-		case services.ErrInvalidToken:
+		case errors.Is(err, services.ErrInvalidToken):
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid token format"})
 		default:
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to refresh token: " + err.Error()})
@@ -160,8 +160,8 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 
 func (h *AuthHandler) UpdateStatus(c *gin.Context) {
 	var updateRequest struct {
-		UserID string `json:"userId" binding:"required"`
-		Active bool   `json:"active" binding:"required"`
+		userId string `json:"userId" binding:"required"`
+		active bool   `json:"active" binding:"required"`
 	}
 
 	if err := c.BindJSON(&updateRequest); err != nil {
@@ -169,13 +169,13 @@ func (h *AuthHandler) UpdateStatus(c *gin.Context) {
 		return
 	}
 
-	userID, err := uuid.Parse(updateRequest.UserID)
+	userID, err := uuid.Parse(updateRequest.userId)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
 		return
 	}
 
-	if err = h.authService.UpdateUserStatus(c, userID, updateRequest.Active); err != nil {
+	if err = h.authService.UpdateUserStatus(c, userID, updateRequest.active); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user status: " + err.Error()})
 		return
 	}
@@ -191,10 +191,99 @@ func (h *AuthHandler) DeleteUser(c *gin.Context) {
 		return
 	}
 
-	if err := h.authService.DeleteUser(c, userID); err != nil {
+	if err = h.authService.DeleteUser(c, userID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete user: " + err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
+}
+
+func (h *AuthHandler) RegisterAdmin(c *gin.Context) {
+	exists, err := h.authService.AdminExists(c)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve data: " + err.Error()})
+		return
+	}
+
+	if exists {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Cant create new Admin, already exists"})
+		return
+	}
+
+	var registerRequest struct {
+		FirstName string `json:"firstName" binding:"required"`
+		LastName  string `json:"lastName" binding:"required"`
+		Username  string `json:"username" binding:"required"`
+		Email     string `json:"email" binding:"required,email"`
+		Password  string `json:"password" binding:"required,min=4"`
+	}
+
+	if err = c.BindJSON(&registerRequest); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request format: " + err.Error()})
+		return
+	}
+
+	newUser := &models.User{
+		FirstName: registerRequest.FirstName,
+		LastName:  registerRequest.LastName,
+		Username:  registerRequest.Username,
+		Email:     registerRequest.Email,
+		Password:  registerRequest.Password,
+		Role:      constants.AdminRole,
+		Active:    true,
+	}
+
+	createdUser, err := h.authService.RegisterUser(c, newUser)
+	if err != nil {
+		if errors.Is(err, services.ErrUserExists) {
+			c.JSON(http.StatusConflict, gin.H{"error": "User with this email or username already exists"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to register user: " + err.Error()})
+		}
+		return
+	}
+
+	createdUser.Password = ""
+
+	c.JSON(http.StatusCreated, createdUser)
+}
+
+func (h *AuthHandler) RegisterDirector(c *gin.Context) {
+	var registerRequest struct {
+		FirstName string `json:"firstName" binding:"required"`
+		LastName  string `json:"lastName" binding:"required"`
+		Username  string `json:"username" binding:"required"`
+		Email     string `json:"email" binding:"required,email"`
+		Password  string `json:"password" binding:"required,min=4"`
+	}
+
+	if err := c.BindJSON(&registerRequest); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request format: " + err.Error()})
+		return
+	}
+
+	newUser := &models.User{
+		FirstName: registerRequest.FirstName,
+		LastName:  registerRequest.LastName,
+		Username:  registerRequest.Username,
+		Email:     registerRequest.Email,
+		Password:  registerRequest.Password,
+		Role:      constants.DirectorRole,
+		Active:    true,
+	}
+
+	createdUser, err := h.authService.RegisterUser(c, newUser)
+	if err != nil {
+		if errors.Is(err, services.ErrUserExists) {
+			c.JSON(http.StatusConflict, gin.H{"error": "User with this email or username already exists"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to register user: " + err.Error()})
+		}
+		return
+	}
+
+	createdUser.Password = ""
+
+	c.JSON(http.StatusCreated, createdUser)
 }

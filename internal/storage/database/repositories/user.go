@@ -5,6 +5,7 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"itv-movie/internal/models"
+	"itv-movie/internal/pkg/utils/constants"
 	"itv-movie/internal/storage/database"
 	"time"
 )
@@ -72,4 +73,13 @@ func (r *UserRepository) UpdateStatus(ctx context.Context, userID uuid.UUID, act
 
 func (r *UserRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	return r.db.WithContext(ctx).Delete(&models.User{}, id).Error
+}
+
+func (r *UserRepository) FindAdmin(ctx context.Context) (int64, error) {
+	var adminCount int64
+	if err := r.db.WithContext(ctx).Model(&models.User{}).Where("role = ?", constants.AdminRole).Count(&adminCount).Error; err != nil {
+		return 0, err
+	}
+
+	return adminCount, nil
 }

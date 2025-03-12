@@ -12,6 +12,7 @@ func RegisterAuthRoutes(router *gin.RouterGroup, authHandler *handlers.AuthHandl
 	{
 		// Public routes
 		auth.POST("/register", authHandler.Register)
+		auth.POST("/register-admin", authHandler.RegisterAdmin)
 		auth.POST("/login", authHandler.Login)
 		auth.POST("/refresh", authHandler.RefreshToken)
 
@@ -22,6 +23,7 @@ func RegisterAuthRoutes(router *gin.RouterGroup, authHandler *handlers.AuthHandl
 		// Admin routes
 		admin := auth.Group("/admin")
 		admin.Use(middlewares.AdminOnly())
+		admin.POST("/register-director", authHandler.RegisterDirector)
 		admin.PUT("/status", authHandler.UpdateStatus)
 		admin.DELETE("/users/:id", authHandler.DeleteUser)
 	}

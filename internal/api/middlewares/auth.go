@@ -5,6 +5,7 @@ import (
 	"github.com/google/uuid"
 	"itv-movie/internal/api/services"
 	"itv-movie/internal/pkg/jwt"
+	"itv-movie/internal/pkg/utils/constants"
 	"net/http"
 )
 
@@ -77,5 +78,5 @@ func RoleMiddleware(roles ...string) gin.HandlerFunc {
 
 // AdminOnly middleware ensures the user is an admin
 func AdminOnly() gin.HandlerFunc {
-	return RoleMiddleware("admin")
+	return RoleMiddleware(constants.AdminRole)
 }

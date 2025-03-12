@@ -22,12 +22,6 @@ type Config struct {
 	Internal Internal
 }
 
-type Roles struct {
-	Admin    string `yaml:"admin"`
-	Director string `yaml:"director"`
-	User     string `yaml:"user"`
-}
-
 type Internal struct {
 	Server   Server   `yaml:"server"`
 	Database Database `yaml:"database"`

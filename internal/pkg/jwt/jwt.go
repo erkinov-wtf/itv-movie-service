@@ -32,7 +32,23 @@ type CustomClaims struct {
 }
 
 func GenerateToken(userId, username, email, role string, jwtConfig *config.Jwt, tokenType TokenType, duration time.Duration) (string, time.Time, error) {
-	expirationTime := time.Now().Add(duration)
+	now := time.Now()
+
+	if duration <= 0 {
+		if tokenType == AccessToken {
+			duration = 30 * time.Minute
+		} else {
+			duration = 7 * 24 * time.Hour
+		}
+		fmt.Printf("Warning: Invalid token duration provided. Using default: %v\n", duration)
+	}
+
+	expirationTime := now.Add(duration)
+
+	if expirationTime.Equal(now) {
+		expirationTime = now.Add(30 * time.Minute)
+		fmt.Println("Warning: Expiration time equals issue time. Setting to now+30min.")
+	}
 
 	claims := CustomClaims{
 		UserID:    userId,
@@ -42,8 +58,8 @@ func GenerateToken(userId, username, email, role string, jwtConfig *config.Jwt, 
 		TokenType: tokenType,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-			NotBefore: jwt.NewNumericDate(time.Now()),
+			IssuedAt:  jwt.NewNumericDate(now),
+			NotBefore: jwt.NewNumericDate(now),
 			Issuer:    jwtConfig.Domain,
 			Subject:   jwtConfig.Realm,
 			ID:        uuid.New().String(),
