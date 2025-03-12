@@ -55,3 +55,25 @@ func (r *SessionRepository) RevokeAllForUser(ctx context.Context, userID uuid.UU
 		Where("user_id = ? AND is_revoked = false", userID).
 		Update("is_revoked", true).Error
 }
+
+func (r *SessionRepository) GetByAccessToken(ctx context.Context, accessToken string) (*models.Session, error) {
+	var session models.Session
+	if err := r.db.WithContext(ctx).Where("access_token = ? AND is_revoked = false", accessToken).First(&session).Error; err != nil {
+		return nil, err
+	}
+	return &session, nil
+}
+
+func (r *SessionRepository) GetByRefreshToken(ctx context.Context, refreshToken string) (*models.Session, error) {
+	var session models.Session
+	if err := r.db.WithContext(ctx).Where("refresh_token = ? AND is_revoked = false", refreshToken).First(&session).Error; err != nil {
+		return nil, err
+	}
+	return &session, nil
+}
+
+func (r *SessionRepository) RevokeByID(ctx context.Context, sessionID uuid.UUID) error {
+	return r.db.WithContext(ctx).Model(&models.Session{}).
+		Where("id = ?", sessionID).
+		Update("is_revoked", true).Error
+}

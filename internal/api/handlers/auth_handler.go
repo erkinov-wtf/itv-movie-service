@@ -5,8 +5,8 @@ import (
 	"github.com/google/uuid"
 	"itv-movie/internal/api/services"
 	"itv-movie/internal/models"
+	"itv-movie/internal/pkg/jwt"
 	"net/http"
-	"time"
 )
 
 type AuthHandler struct {
@@ -60,7 +60,6 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	c.JSON(http.StatusCreated, createdUser)
 }
 
-// Login handles user authentication
 func (h *AuthHandler) Login(c *gin.Context) {
 	var loginRequest struct {
 		Username string `json:"username" binding:"required"`
@@ -92,46 +91,78 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	// Don't return the password hash
 	user.Password = ""
 
-	// Set session token in cookie
-	c.SetCookie(
-		"session_token",
-		session.Token,
-		int(time.Until(session.ExpiresAt).Seconds()),
-		"/",
-		"",    // Domain
-		false, // Not secure for local dev (change to true in production)
-		true,  // HTTP only
-	)
-
 	c.JSON(http.StatusOK, gin.H{
-		"user":      user,
-		"token":     session.Token,
-		"expiresAt": session.ExpiresAt,
+		"user":          user,
+		"access_token":  session.AccessToken,
+		"refresh_token": session.RefreshToken,
+		"expires_at":    session.ExpiresAt,
 	})
 }
 
-// Logout handles user logout
+// Logout handles user logout with JWT
 func (h *AuthHandler) Logout(c *gin.Context) {
-	// Get token from cookie or header
-	token, err := c.Cookie("session_token")
-	if err != nil {
-		// If not in cookie, try from Authorization header
-		token = c.GetHeader("Authorization")
-		if token == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "No session token provided"})
-			return
-		}
-	}
-
-	if err := h.authService.Logout(c, token); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to logout: " + err.Error()})
+	// Get token from Authorization header
+	authHeader := c.GetHeader("Authorization")
+	if authHeader == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Authorization header is required"})
 		return
 	}
 
-	// Clear the cookie
-	c.SetCookie("session_token", "", -1, "/", "", false, true)
+	// Extract token from header
+	accessToken, err := jwt.ExtractBearerToken(authHeader)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := h.authService.Logout(c, accessToken); err != nil {
+		if err == services.ErrSessionInvalid {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid session"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to logout: " + err.Error()})
+		}
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Successfully logged out"})
+}
+
+// Add a new refresh token handler
+func (h *AuthHandler) RefreshToken(c *gin.Context) {
+	var refreshRequest struct {
+		RefreshToken string `json:"refresh_token" binding:"required"`
+	}
+
+	if err := c.BindJSON(&refreshRequest); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request format: " + err.Error()})
+		return
+	}
+
+	// Get IP and user agent for the session
+	userAgent := c.GetHeader("User-Agent")
+	ipAddress := c.ClientIP()
+
+	// Get new tokens
+	newSession, err := h.authService.RefreshTokens(c, refreshRequest.RefreshToken, userAgent, ipAddress)
+	if err != nil {
+		switch err {
+		case services.ErrSessionInvalid:
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid session"})
+		case services.ErrRefreshTokenExpired:
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Refresh token has expired, please login again"})
+		case services.ErrInvalidToken:
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid token format"})
+		default:
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to refresh token: " + err.Error()})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"access_token":  newSession.AccessToken,
+		"refresh_token": newSession.RefreshToken,
+		"expires_at":    newSession.ExpiresAt,
+	})
 }
 
 func (h *AuthHandler) UpdateStatus(c *gin.Context) {

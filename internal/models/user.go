@@ -1,9 +1,12 @@
 package models
 
 import (
+	"fmt"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
+	"itv-movie/internal/config"
+	"itv-movie/internal/pkg/jwt"
 	"time"
 )
 
@@ -58,4 +61,32 @@ func (u *User) GenerateSession(expiresIn time.Duration, userAgent, ipAddress str
 
 func (s *Session) IsSessionValid() bool {
 	return !s.IsRevoked && time.Now().Before(s.ExpiresAt)
+}
+
+func (u *User) GenerateTokens(jwtConf *config.Jwt, userAgent, ipAddress string) (*Session, error) {
+	// Generate an access token
+	accessToken, accessTokenExpiry, err := jwt.GenerateToken(u, jwtConf, jwt.AccessToken, time.Duration(jwtConf.AccessTokenTTL))
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate access token: %w", err)
+	}
+
+	// Generate a refresh token
+	refreshToken, refreshTokenExpiry, err := jwt.GenerateToken(u, jwtConf, jwt.RefreshToken, time.Duration(jwtConf.RefreshTokenTTL))
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate refresh token: %w", err)
+	}
+
+	// Create and return a new session
+	session := Session{
+		UserID:        u.ID,
+		AccessToken:   accessToken,
+		RefreshToken:  refreshToken,
+		ExpiresAt:     accessTokenExpiry,
+		RefreshExpiry: refreshTokenExpiry,
+		UserAgent:     userAgent,
+		IPAddress:     ipAddress,
+		IsRevoked:     false,
+	}
+
+	return &session, nil
 }

@@ -50,10 +50,12 @@ type Database struct {
 }
 
 type Jwt struct {
-	Audience string `yaml:"audience"`
-	Domain   string `yaml:"domain"`
-	Realm    string `yaml:"realm"`
-	Secret   string `yaml:"secret"`
+	Audience        string `yaml:"audience"`
+	Domain          string `yaml:"domain"`
+	Realm           string `yaml:"realm"`
+	Secret          string `yaml:"secret"`
+	AccessTokenTTL  int    `yaml:"access_token_ttl"`
+	RefreshTokenTTL int    `yaml:"refresh_token_ttl"`
 }
 
 func MustLoad() *Config {

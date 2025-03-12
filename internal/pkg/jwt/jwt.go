@@ -32,7 +32,7 @@ type CustomClaims struct {
 	jwt.RegisteredClaims
 }
 
-func GenerateToken(user *models.User, cfg *config.Config, tokenType TokenType, duration time.Duration) (string, time.Time, error) {
+func GenerateToken(user *models.User, jwtConfig *config.Jwt, tokenType TokenType, duration time.Duration) (string, time.Time, error) {
 	expirationTime := time.Now().Add(duration)
 
 	claims := CustomClaims{
@@ -45,15 +45,15 @@ func GenerateToken(user *models.User, cfg *config.Config, tokenType TokenType, d
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			NotBefore: jwt.NewNumericDate(time.Now()),
-			Issuer:    cfg.Internal.Jwt.Domain,
-			Subject:   cfg.Internal.Jwt.Realm,
+			Issuer:    jwtConfig.Domain,
+			Subject:   jwtConfig.Realm,
 			ID:        uuid.New().String(),
 		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	tokenString, err := token.SignedString([]byte(cfg.Internal.Jwt.Secret))
+	tokenString, err := token.SignedString([]byte(jwtConfig.Secret))
 	if err != nil {
 		return "", time.Time{}, err
 	}

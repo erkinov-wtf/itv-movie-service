@@ -16,3 +16,5 @@ local_configs:
     domain: "https://itv.uz"
     realm: "uz.itv"
     secret: "TheB3s7Pa$$w0rdlnth3hlst0ryEv3R"
+    access_token_ttl: 1800
+    refresh_token_ttl: 604800
