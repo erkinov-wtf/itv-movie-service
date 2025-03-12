@@ -5,10 +5,13 @@ import (
 	"itv-movie/internal/api/routes/path"
 )
 
-func RegisterRoutes(router *Router, languageHandler *handlers.LanguageHandler, genreHandler *handlers.GenreHandler) {
+func RegisterRoutes(router *Router,
+	languageHandler *handlers.LanguageHandler, genreHandler *handlers.GenreHandler, countriesHandler *handlers.CountryHandler,
+) {
 	api := router.Engine().Group("/api/v1")
 	{
 		path.RegisterLanguageRoutes(api, languageHandler)
 		path.RegisterGenreRoutes(api, genreHandler)
+		path.RegisterCountryRoutes(api, countriesHandler)
 	}
 }

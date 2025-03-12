@@ -111,7 +111,7 @@ func (h *GenreHandler) UpdateGenre(c *gin.Context) {
 
 	var body struct {
 		Name        *string `json:"name,omitempty"`
-		Description *string `json:"code,omitempty"`
+		Description *string `json:"description,omitempty"`
 	}
 
 	if err = c.BindJSON(&body); err != nil {

@@ -38,14 +38,17 @@ func main() {
 			// Repositories
 			repositories.NewLanguageRepository,
 			repositories.NewGenreRepository,
+			repositories.NewCountryRepository,
 
 			// Services
 			services.NewLanguageService,
 			services.NewGenreService,
+			services.NewCountryService,
 
 			// Handlers setup
 			handlers.NewLanguageHandler,
 			handlers.NewGenreHandler,
+			handlers.NewCountryHandler,
 			//TODO add others
 
 			// Router
