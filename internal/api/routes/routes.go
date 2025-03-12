@@ -1,25 +1,13 @@
 package routes
 
-import "itv-movie/internal/api/handlers"
+import (
+	"itv-movie/internal/api/handlers"
+	"itv-movie/internal/api/routes/path"
+)
 
-func RegisterRoutes(router *Router, movieHandler *handlers.MovieHandler, authHandler *handlers.AuthHandler) {
+func RegisterRoutes(router *Router, languageHandler *handlers.LanguageHandler) {
 	api := router.Engine().Group("/api/v1")
-
-	// Movie routes
-	movies := api.Group("/movies")
 	{
-		movies.GET("", movieHandler.ListMovies)
-		movies.POST("", movieHandler.CreateMovie)
-		movies.GET("/:id", movieHandler.GetMovie)
-		movies.PUT("/:id", movieHandler.UpdateMovie)
-		movies.DELETE("/:id", movieHandler.DeleteMovie)
-	}
-
-	// Auth routes
-	auth := api.Group("/auth")
-	{
-		auth.POST("/register", authHandler.Register)
-		auth.POST("/login", authHandler.Login)
-		auth.POST("/logout", authHandler.Logout)
+		path.RegisterLanguageRoutes(api, languageHandler)
 	}
 }

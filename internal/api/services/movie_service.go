@@ -5,13 +5,14 @@ import (
 	"github.com/google/uuid"
 	"itv-movie/internal/models"
 	"itv-movie/internal/storage/database"
+	"itv-movie/internal/storage/database/repositories"
 )
 
 // MovieService handles business logic for movies
 type MovieService struct {
 	movieRepo    *database.MovieRepository
 	genreRepo    *database.GenreRepository
-	languageRepo *database.LanguageRepository
+	languageRepo *repositories.LanguageRepository
 	countryRepo  *database.CountryRepository
 }
 
@@ -19,7 +20,7 @@ type MovieService struct {
 func NewMovieService(
 	movieRepo *database.MovieRepository,
 	genreRepo *database.GenreRepository,
-	languageRepo *database.LanguageRepository,
+	languageRepo *repositories.LanguageRepository,
 	countryRepo *database.CountryRepository,
 ) *MovieService {
 	return &MovieService{

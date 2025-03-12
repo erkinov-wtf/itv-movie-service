@@ -34,7 +34,6 @@ func (r *Router) Engine() *gin.Engine {
 	return r.engine
 }
 
-// Run starts the HTTP server
 func (r *Router) Run() error {
 	return r.engine.Run(fmt.Sprintf("%s:%d", r.config.Internal.Server.Host, r.config.Internal.Server.Port))
 }

@@ -10,6 +10,7 @@ import (
 	"itv-movie/internal/config"
 	"itv-movie/internal/pkg/utils/logger"
 	"itv-movie/internal/storage/database"
+	"itv-movie/internal/storage/database/repositories"
 	"log"
 	"log/slog"
 	"os"
@@ -17,11 +18,20 @@ import (
 	"syscall"
 )
 
+func provideLoggerEnv(cfg *config.Config) string {
+	env := config.LocalEnv
+	if cfg.Env != "" {
+		env = cfg.Env
+	}
+	return env
+}
+
 func main() {
 	app := fx.New(
 		// Providing all dependencies
 		fx.Provide(
 			config.MustLoad,
+			provideLoggerEnv,
 			logger.SetupLogger,
 			database.MustLoadDB,
 
@@ -29,16 +39,14 @@ func main() {
 			database.NewMovieRepository,
 			database.NewGenreRepository,
 			database.NewCountryRepository,
-			database.NewLanguageRepository,
+			repositories.NewLanguageRepository,
 			database.NewUserRepository,
 
 			// Services
-			services.NewMovieService,
-			services.NewAuthService,
+			services.NewLanguageService,
 
 			// Handlers setup
-			handlers.NewMovieHandler,
-			handlers.NewAuthHandler,
+			handlers.NewLanguageHandler,
 			//TODO add others
 
 			// Router
@@ -50,6 +58,7 @@ func main() {
 
 		// Lifecycle hooks
 		fx.Invoke(registerHooks),
+		fx.Invoke(startHTTPServer),
 	)
 
 	startCtx, cancel := context.WithTimeout(context.Background(), config.DefaultTimeout)
@@ -71,6 +80,26 @@ func main() {
 	if err := app.Stop(stopCtx); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func startHTTPServer(lc fx.Lifecycle, router *routes.Router, log *slog.Logger) {
+	lc.Append(fx.Hook{
+		OnStart: func(ctx context.Context) error {
+			log.Info("Starting HTTP server")
+			// Start the server in a goroutine so it doesn't block
+			go func() {
+				if err := router.Run(); err != nil {
+					log.Error("Failed to start HTTP server", "error", err)
+				}
+			}()
+			return nil
+		},
+		OnStop: func(ctx context.Context) error {
+			log.Info("Stopping HTTP server")
+			// The HTTP server will stop when the application stops
+			return nil
+		},
+	})
 }
 
 func registerHooks(lc fx.Lifecycle, db *database.PostgresDB, cfg *config.Config, log *slog.Logger) {

@@ -26,14 +26,6 @@ func NewGenreRepository(postgres *PostgresDB) *GenreRepository {
 	return &GenreRepository{db: postgres.DB}
 }
 
-type LanguageRepository struct {
-	db *gorm.DB
-}
-
-func NewLanguageRepository(postgres *PostgresDB) *LanguageRepository {
-	return &LanguageRepository{db: postgres.DB}
-}
-
 type UserRepository struct {
 	db *gorm.DB
 }
