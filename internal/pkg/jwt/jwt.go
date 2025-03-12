@@ -6,7 +6,6 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"itv-movie/internal/config"
-	"itv-movie/internal/models"
 	"time"
 )
 
@@ -32,14 +31,14 @@ type CustomClaims struct {
 	jwt.RegisteredClaims
 }
 
-func GenerateToken(user *models.User, jwtConfig *config.Jwt, tokenType TokenType, duration time.Duration) (string, time.Time, error) {
+func GenerateToken(userId, username, email, role string, jwtConfig *config.Jwt, tokenType TokenType, duration time.Duration) (string, time.Time, error) {
 	expirationTime := time.Now().Add(duration)
 
 	claims := CustomClaims{
-		UserID:    user.ID.String(),
-		Username:  user.Username,
-		Email:     user.Email,
-		Role:      user.Role,
+		UserID:    userId,
+		Username:  username,
+		Email:     email,
+		Role:      role,
 		TokenType: tokenType,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"itv-movie/internal/api/services"
@@ -46,7 +47,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 
 	createdUser, err := h.authService.RegisterUser(c, newUser)
 	if err != nil {
-		if err == services.ErrUserExists {
+		if errors.Is(err, services.ErrUserExists) {
 			c.JSON(http.StatusConflict, gin.H{"error": "User with this email or username already exists"})
 		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to register user: " + err.Error()})
@@ -71,7 +72,6 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	// Get IP and user agent for the session
 	userAgent := c.GetHeader("User-Agent")
 	ipAddress := c.ClientIP()
 
@@ -88,7 +88,6 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	// Don't return the password hash
 	user.Password = ""
 
 	c.JSON(http.StatusOK, gin.H{
@@ -99,24 +98,21 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	})
 }
 
-// Logout handles user logout with JWT
 func (h *AuthHandler) Logout(c *gin.Context) {
-	// Get token from Authorization header
 	authHeader := c.GetHeader("Authorization")
 	if authHeader == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Authorization header is required"})
 		return
 	}
 
-	// Extract token from header
 	accessToken, err := jwt.ExtractBearerToken(authHeader)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	if err := h.authService.Logout(c, accessToken); err != nil {
-		if err == services.ErrSessionInvalid {
+	if err = h.authService.Logout(c, accessToken); err != nil {
+		if errors.Is(err, services.ErrSessionInvalid) {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid session"})
 		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to logout: " + err.Error()})
@@ -127,7 +123,6 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Successfully logged out"})
 }
 
-// Add a new refresh token handler
 func (h *AuthHandler) RefreshToken(c *gin.Context) {
 	var refreshRequest struct {
 		RefreshToken string `json:"refresh_token" binding:"required"`
@@ -138,11 +133,9 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	// Get IP and user agent for the session
 	userAgent := c.GetHeader("User-Agent")
 	ipAddress := c.ClientIP()
 
-	// Get new tokens
 	newSession, err := h.authService.RefreshTokens(c, refreshRequest.RefreshToken, userAgent, ipAddress)
 	if err != nil {
 		switch err {
@@ -182,10 +175,7 @@ func (h *AuthHandler) UpdateStatus(c *gin.Context) {
 		return
 	}
 
-	// TODO: Verify that the requester is an admin
-	// This would normally be done by middleware or an auth check here
-
-	if err := h.authService.UpdateUserStatus(c, userID, updateRequest.Active); err != nil {
+	if err = h.authService.UpdateUserStatus(c, userID, updateRequest.Active); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user status: " + err.Error()})
 		return
 	}
@@ -200,9 +190,6 @@ func (h *AuthHandler) DeleteUser(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
 		return
 	}
-
-	// TODO: Verify that the requester is an admin or the user themself
-	// This would normally be done by middleware or an auth check here
 
 	if err := h.authService.DeleteUser(c, userID); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete user: " + err.Error()})
