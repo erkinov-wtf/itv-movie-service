@@ -1,0 +1,16 @@
+local_configs:
+  port: 8080
+
+  database:
+    host: "localhost"
+    port: "5432"
+    name: "postgres"
+    user: "postgres"
+    schema: "public"
+    password: "postgres"
+
+  jwt:
+    audience: "oygulUsers"
+    domain: "https://oygul.uz"
+    realm: "uz.oygul"
+    secret: "0ygUltEamiStHeBes1OneOnEarthSheesh!!"

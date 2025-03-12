@@ -1,0 +1,8 @@
+app_name: "movie-service"
+env: "local" # local | release -> will be overwritten from os.Getenv()
+timezone: "Asia/Tashkent"
+
+roles:
+  admin: "ADMIN"
+  director: "DIRECTOR"
+  user: "USER"

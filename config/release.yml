@@ -1,0 +1,16 @@
+production_configs:
+  port: 8083
+
+  database:
+    host: "localhost"
+    port: "5432"
+    name: "postgres"
+    user: "postgres"
+    schema: "public"
+    password: "postgres" # will be overwritten from os.Getenv()
+
+  jwt:
+    audience: "oygulUsers"
+    domain: "https://oygul.uz"
+    realm: "uz.oygul"
+    secret: "SomeFuckingJwtCode" # will be overwritten from os.Getenv()
