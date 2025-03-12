@@ -8,6 +8,18 @@ func RegisterRoutes(router *Router, movieHandler *handlers.MovieHandler, authHan
 	// Movie routes
 	movies := api.Group("/movies")
 	{
-		//TODO add routes
+		movies.GET("", movieHandler.ListMovies)
+		movies.POST("", movieHandler.CreateMovie)
+		movies.GET("/:id", movieHandler.GetMovie)
+		movies.PUT("/:id", movieHandler.UpdateMovie)
+		movies.DELETE("/:id", movieHandler.DeleteMovie)
+	}
+
+	// Auth routes
+	auth := api.Group("/auth")
+	{
+		auth.POST("/register", authHandler.Register)
+		auth.POST("/login", authHandler.Login)
+		auth.POST("/logout", authHandler.Logout)
 	}
 }
