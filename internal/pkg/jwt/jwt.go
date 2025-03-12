@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"itv-movie/internal/config"
+	"itv-movie/internal/models"
 	"time"
 )
 
@@ -13,7 +15,6 @@ var (
 	ErrExpiredToken = errors.New("token has expired")
 )
 
-// TokenType represents the type of JWT token
 type TokenType string
 
 const (
@@ -31,33 +32,28 @@ type CustomClaims struct {
 	jwt.RegisteredClaims
 }
 
-// GenerateToken creates a new JWT token
-func GenerateToken(userID uuid.UUID, username, email, role string, tokenType TokenType, secretKey string, duration time.Duration) (string, time.Time, error) {
-	// Set expiration time
+func GenerateToken(user *models.User, cfg *config.Config, tokenType TokenType, duration time.Duration) (string, time.Time, error) {
 	expirationTime := time.Now().Add(duration)
 
-	// Create claims with user data and expiry time
 	claims := CustomClaims{
-		UserID:    userID.String(),
-		Username:  username,
-		Email:     email,
-		Role:      role,
+		UserID:    user.ID.String(),
+		Username:  user.Username,
+		Email:     user.Email,
+		Role:      user.Role,
 		TokenType: tokenType,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			NotBefore: jwt.NewNumericDate(time.Now()),
-			Issuer:    "itv-movie-api",
-			Subject:   userID.String(),
-			ID:        uuid.New().String(), // Unique JWT ID
+			Issuer:    cfg.Internal.Jwt.Domain,
+			Subject:   cfg.Internal.Jwt.Realm,
+			ID:        uuid.New().String(),
 		},
 	}
 
-	// Create token with claims
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	// Generate the encoded token
-	tokenString, err := token.SignedString([]byte(secretKey))
+	tokenString, err := token.SignedString([]byte(cfg.Internal.Jwt.Secret))
 	if err != nil {
 		return "", time.Time{}, err
 	}
@@ -65,14 +61,11 @@ func GenerateToken(userID uuid.UUID, username, email, role string, tokenType Tok
 	return tokenString, expirationTime, nil
 }
 
-// ValidateToken checks if a token is valid and returns the claims
 func ValidateToken(tokenString, secretKey string) (*CustomClaims, error) {
-	// Parse the token
 	token, err := jwt.ParseWithClaims(
 		tokenString,
 		&CustomClaims{},
 		func(token *jwt.Token) (interface{}, error) {
-			// Validate signing method
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
@@ -81,14 +74,12 @@ func ValidateToken(tokenString, secretKey string) (*CustomClaims, error) {
 	)
 
 	if err != nil {
-		// Check for specific JWT validation errors
 		if errors.Is(err, jwt.ErrTokenExpired) || errors.Is(err, jwt.ErrTokenNotValidYet) {
 			return nil, ErrExpiredToken
 		}
 		return nil, fmt.Errorf("invalid token: %w", err)
 	}
 
-	// Extract custom claims
 	claims, ok := token.Claims.(*CustomClaims)
 	if !ok || !token.Valid {
 		return nil, ErrInvalidToken
