@@ -65,3 +65,15 @@ func (r *GenreRepository) Count(ctx context.Context) (int, error) {
 	}
 	return int(count), nil
 }
+
+func (r *GenreRepository) GetByName(ctx context.Context, name string) (*models.Genre, error) {
+	var genre models.Genre
+
+	if err := r.db.WithContext(ctx).Where("name = ?", name).First(&genre).Error; err != nil {
+		if err = r.db.WithContext(ctx).Where("LOWER(name) = LOWER(?)", name).First(&genre).Error; err != nil {
+			return nil, err
+		}
+	}
+
+	return &genre, nil
+}

@@ -65,3 +65,13 @@ func (r *CountryRepository) Count(ctx context.Context) (int, error) {
 	}
 	return int(count), nil
 }
+
+func (r *CountryRepository) GetByCode(ctx context.Context, code string) (*models.Country, error) {
+	var country models.Country
+
+	if err := r.db.WithContext(ctx).Where("code = ?", code).First(&country).Error; err != nil {
+		return nil, err
+	}
+
+	return &country, nil
+}

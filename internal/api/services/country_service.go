@@ -30,7 +30,7 @@ func (s *CountryService) CreateCountry(ctx context.Context, country *models.Coun
 	return createdCountry, nil
 }
 
-func (s *CountryService) GetAllCountrys(ctx context.Context, page, limit int) ([]*models.Country, error) {
+func (s *CountryService) GetAllCountries(ctx context.Context, page, limit int) ([]*models.Country, error) {
 	if page < 1 {
 		page = 1
 	}

@@ -62,7 +62,7 @@ func (h *CountryHandler) GetAllCountries(c *gin.Context) {
 		limit = 10
 	}
 
-	countrys, err := h.countryService.GetAllCountrys(c, page, limit)
+	countrys, err := h.countryService.GetAllCountries(c, page, limit)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve countrys: " + err.Error()})
 		return

@@ -13,7 +13,7 @@ type Movie struct {
 	Year        int            `gorm:"column:year;type:integer;index"`
 	Plot        string         `gorm:"column:plot;type:text"`
 	Runtime     int            `gorm:"column:runtime;type:integer;comment:'Duration in minutes'"`
-	Rating      float64        `gorm:"column:rating;type:decimal(3,1);default:0.0"`
+	Rating      float32        `gorm:"column:rating;type:decimal(3,1);default:0.0"`
 	PosterURL   string         `gorm:"column:poster_url;type:text"`
 	TrailerURL  string         `gorm:"column:trailer_url;type:text"`
 	ReleaseDate *time.Time     `gorm:"column:release_date;type:date"`

@@ -39,16 +39,19 @@ func main() {
 			repositories.NewLanguageRepository,
 			repositories.NewGenreRepository,
 			repositories.NewCountryRepository,
+			repositories.NewMovieRepository,
 
 			// Services
 			services.NewLanguageService,
 			services.NewGenreService,
 			services.NewCountryService,
+			services.NewMovieService,
 
 			// Handlers setup
 			handlers.NewLanguageHandler,
 			handlers.NewGenreHandler,
 			handlers.NewCountryHandler,
+			handlers.NewMovieHandler,
 			//TODO add others
 
 			// Router
