@@ -16,10 +16,10 @@ func RegisterRoutes(router *Router,
 ) {
 	api := router.Engine().Group("/api/v1")
 	{
-		path.RegisterLanguageRoutes(api, languageHandler)
-		path.RegisterGenreRoutes(api, genreHandler)
-		path.RegisterCountryRoutes(api, countriesHandler)
-		path.RegisterMovieRoutes(api, moviesHandler)
+		path.RegisterLanguageRoutes(api, languageHandler, authService)
+		path.RegisterGenreRoutes(api, genreHandler, authService)
+		path.RegisterCountryRoutes(api, countriesHandler, authService)
+		path.RegisterMovieRoutes(api, moviesHandler, authService)
 		path.RegisterAuthRoutes(api, authHandler, authService)
 	}
 }

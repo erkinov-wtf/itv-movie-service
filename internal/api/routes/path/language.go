@@ -3,15 +3,23 @@ package path
 import (
 	"github.com/gin-gonic/gin"
 	"itv-movie/internal/api/handlers"
+	"itv-movie/internal/api/middlewares"
+	"itv-movie/internal/api/services"
 )
 
-func RegisterLanguageRoutes(r *gin.RouterGroup, handler *handlers.LanguageHandler) {
+func RegisterLanguageRoutes(r *gin.RouterGroup, handler *handlers.LanguageHandler, authService *services.AuthService) {
 	languages := r.Group("/languages")
 	{
-		languages.POST("", handler.CreateLanguage)
 		languages.GET("", handler.GetAllLanguages)
 		languages.GET("/:id", handler.GetLanguage)
-		languages.PUT("/:id", handler.UpdateLanguage)
-		languages.DELETE("/:id", handler.DeleteLanguage)
+
+		restricted := languages.Group("")
+		restricted.Use(middlewares.AuthMiddleware(authService))
+		restricted.Use(middlewares.AdminOrDirectorOnly())
+		{
+			restricted.POST("", handler.CreateLanguage)
+			restricted.PUT("/:id", handler.UpdateLanguage)
+			restricted.DELETE("/:id", handler.DeleteLanguage)
+		}
 	}
 }
