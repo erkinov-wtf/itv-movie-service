@@ -83,3 +83,24 @@ func (r *UserRepository) FindAdmin(ctx context.Context) (int64, error) {
 
 	return adminCount, nil
 }
+
+func (r *UserRepository) GetAllUsers(ctx context.Context, page, limit int) ([]*models.User, int64, error) {
+	var users []*models.User
+	var total int64
+
+	if err := r.db.WithContext(ctx).Model(&models.User{}).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	offset := (page - 1) * limit
+
+	if err := r.db.WithContext(ctx).
+		Limit(limit).
+		Offset(offset).
+		Order("created_at DESC").
+		Find(&users).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return users, total, nil
+}

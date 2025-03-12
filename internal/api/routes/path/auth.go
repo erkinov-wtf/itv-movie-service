@@ -24,6 +24,7 @@ func RegisterAuthRoutes(router *gin.RouterGroup, authHandler *handlers.AuthHandl
 		admin := auth.Group("/admin")
 		admin.Use(middlewares.AdminOnly())
 		admin.POST("/register-director", authHandler.RegisterDirector)
+		admin.GET("/users", authHandler.GetAllUsers)
 		admin.PUT("/status", authHandler.UpdateStatus)
 		admin.DELETE("/users/:id", authHandler.DeleteUser)
 	}

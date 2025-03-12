@@ -3,12 +3,15 @@ package handlers
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	"github.com/google/uuid"
 	"itv-movie/internal/api/services"
 	"itv-movie/internal/models"
 	"itv-movie/internal/pkg/jwt"
 	"itv-movie/internal/pkg/utils/constants"
+	"math"
 	"net/http"
+	"strconv"
 )
 
 type AuthHandler struct {
@@ -160,22 +163,22 @@ func (h *AuthHandler) RefreshToken(c *gin.Context) {
 
 func (h *AuthHandler) UpdateStatus(c *gin.Context) {
 	var updateRequest struct {
-		userId string `json:"userId" binding:"required"`
-		active bool   `json:"active" binding:"required"`
+		UserID uuid.UUID `json:"userId"`
+		Active bool      `json:"active"`
 	}
 
-	if err := c.BindJSON(&updateRequest); err != nil {
+	if err := c.ShouldBindWith(&updateRequest, binding.JSON); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request format: " + err.Error()})
 		return
 	}
 
-	userID, err := uuid.Parse(updateRequest.userId)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
+	// Validate manually
+	if updateRequest.UserID == uuid.Nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "User ID is required"})
 		return
 	}
 
-	if err = h.authService.UpdateUserStatus(c, userID, updateRequest.active); err != nil {
+	if err := h.authService.UpdateUserStatus(c, updateRequest.UserID, updateRequest.Active); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update user status: " + err.Error()})
 		return
 	}
@@ -286,4 +289,45 @@ func (h *AuthHandler) RegisterDirector(c *gin.Context) {
 	createdUser.Password = ""
 
 	c.JSON(http.StatusCreated, createdUser)
+}
+
+func (h *AuthHandler) GetAllUsers(c *gin.Context) {
+	pageStr := c.Query("page")
+	limitStr := c.Query("limit")
+
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		page = 1
+	}
+
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit < 1 {
+		limit = 10
+	}
+
+	users, total, err := h.authService.GetAllUsers(c, page, limit)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch users: " + err.Error()})
+		return
+	}
+
+	for _, user := range users {
+		user.Password = "" // sanitization
+	}
+
+	lastPage := int(math.Ceil(float64(total) / float64(limit)))
+	hasNextPage := page < lastPage
+	hasPrevPage := page > 1
+
+	c.JSON(http.StatusOK, gin.H{
+		"data": users,
+		"meta": gin.H{
+			"total":        total,
+			"per_page":     limit,
+			"current_page": page,
+			"last_page":    lastPage,
+			"has_next":     hasNextPage,
+			"has_prev":     hasPrevPage,
+		},
+	})
 }

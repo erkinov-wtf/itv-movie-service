@@ -188,3 +188,15 @@ func (s *AuthService) AdminExists(ctx context.Context) (bool, error) {
 
 	return count > 0, nil
 }
+
+func (s *AuthService) GetAllUsers(ctx context.Context, page, limit int) ([]*models.User, int64, error) {
+	if page < 1 {
+		page = 1
+	}
+
+	if limit < 1 || limit > 1000 {
+		limit = 10
+	}
+
+	return s.userRepo.GetAllUsers(ctx, page, limit)
+}
