@@ -12,7 +12,7 @@ local_configs:
     password: "postgres"
 
   jwt:
-    audience: "oygulUsers"
-    domain: "https://oygul.uz"
-    realm: "uz.oygul"
-    secret: "0ygUltEamiStHeBes1OneOnEarthSheesh!!"
+    audience: "ITV_USERS"
+    domain: "https://itv.uz"
+    realm: "uz.itv"
+    secret: "TheB3s7Pa$$w0rdlnth3hlst0ryEv3R"
