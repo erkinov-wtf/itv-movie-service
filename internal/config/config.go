@@ -26,9 +26,14 @@ type Roles struct {
 }
 
 type Internal struct {
-	Port     int      `yaml:"port"`
+	Server   Server   `yaml:"server"`
 	Database Database `yaml:"database"`
 	Jwt      Jwt      `yaml:"jwt"`
+}
+
+type Server struct {
+	Port int    `yaml:"port"`
+	Host string `yaml:"host"`
 }
 
 type Database struct {

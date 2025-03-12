@@ -1,5 +1,7 @@
 local_configs:
-  port: 8080
+  server:
+    port: 8080
+    host: "localhost"
 
   database:
     host: "localhost"

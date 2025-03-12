@@ -1,5 +1,7 @@
 production_configs:
-  port: 8083
+  server:
+    port: 8083
+    host: "localhost"
 
   database:
     host: "localhost"
